@@ -6,6 +6,14 @@ export interface EnvConfig {
   db: {
     uri: string;
   };
+  station: {
+    scrap: [
+      {
+        url: string;
+        method: 'GET' | 'POST';
+      },
+    ];
+  };
 }
 
 export const envConfig: () => EnvConfig = () => ({
@@ -15,5 +23,13 @@ export const envConfig: () => EnvConfig = () => ({
   },
   db: {
     uri: process.env.DB_URI ?? '',
+  },
+  station: {
+    scrap: [
+      {
+        url: process.env.WEB_TARGET_URL ?? '',
+        method: 'GET',
+      },
+    ],
   },
 });

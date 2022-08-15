@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { EnvConfig } from 'src/config/configuration';
+import { StationsService } from 'src/stations/stations.service';
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  constructor(private readonly config: ConfigService<EnvConfig>) {}
+  constructor(
+    private readonly config: ConfigService<EnvConfig>,
+    private readonly stationService: StationsService,
+  ) {}
 
   @Cron(CronExpression.EVERY_10_MINUTES, { name: 'keepServiceAlive' })
   async keepServiceAlive() {
@@ -22,5 +26,11 @@ export class TasksService {
         JSON.stringify(e),
       );
     }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE, { name: 'stationScrapping' })
+  async scrapStation() {
+    await this.stationService.scrapStations();
+    this.logger.verbose('Scrapper | Station finished');
   }
 }

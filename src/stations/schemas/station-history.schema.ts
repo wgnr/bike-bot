@@ -4,7 +4,7 @@ import { Station } from './station.schema';
 
 export type StationHistoryDocument = StationHistory & Document;
 
-@Schema()
+@Schema({ versionKey: false })
 export class StationHistory {
   @Prop({ type: Date, default: new Date() })
   date: Date;

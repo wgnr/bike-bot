@@ -3,10 +3,10 @@ import { Document } from 'mongoose';
 
 export type StationDocument = Station & Document;
 
-@Schema()
+@Schema({ versionKey: false })
 export class Station {
   @Prop()
-  id: number;
+  stationId: number;
   @Prop()
   name: string;
   @Prop()
@@ -25,7 +25,11 @@ export class Station {
     },
     type: Object,
   })
-  location: Record<string, any>;
+  location: {
+    name: string;
+    latitude: string;
+    longitude: string;
+  };
   @Prop()
   favorite: boolean;
   @Prop()
