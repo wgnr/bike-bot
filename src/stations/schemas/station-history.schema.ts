@@ -5,7 +5,7 @@ export type StationHistoryDocument = StationHistory & Document;
 
 @Schema({ versionKey: false })
 export class StationHistory {
-  @Prop({ type: Date, default: new Date() })
+  @Prop({ type: Date, default: () => new Date() })
   date: Date;
   @Prop()
   stationId: number;
