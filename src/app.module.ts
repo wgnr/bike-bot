@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EnvConfig, envConfig } from './config/configuration';
+import { TasksModule } from './tasks/tasks.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { envConfig } from './config/configuration';
-import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -13,6 +14,16 @@ import { TasksModule } from './tasks/tasks.module';
       load: [envConfig],
     }),
     ScheduleModule.forRoot(),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (
+        configService: ConfigService<EnvConfig>,
+      ): MongooseModuleOptions => ({
+        uri: configService.get('db.uri', {
+          infer: true,
+        }),
+      }),
+    }),
     TasksModule,
   ],
   controllers: [AppController],
