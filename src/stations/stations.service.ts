@@ -66,13 +66,12 @@ export class StationsService {
 
           await this.stationHistoryModel.create({
             ...fetchedStation,
-            station: newStation.id,
+            stationId: newStation.stationId,
           });
 
           await this.stationMetaHistoryModel.create({
             ...fetchedStation,
-            stationId: fetchedStation.id,
-            station: newStation.id,
+            stationId: newStation.stationId,
           });
 
           this.logger.verbose(
@@ -94,7 +93,7 @@ export class StationsService {
 
           await this.stationHistoryModel.create({
             ...fetchedStation,
-            station: savedStation.id,
+            stationId: savedStation.id,
           });
 
           updateStation = true;
@@ -115,7 +114,7 @@ export class StationsService {
 
           await this.stationMetaHistoryModel.create({
             ...updatedFields,
-            station: savedStation.id,
+            stationId: savedStation.id,
           });
 
           updateStation = true;

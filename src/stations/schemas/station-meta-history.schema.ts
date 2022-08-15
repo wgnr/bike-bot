@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
-import { Station } from './station.schema';
+import { Document } from 'mongoose';
 
 export type StationMetaHistoryDocument = StationMetaHistory & Document;
 
@@ -8,8 +7,8 @@ export type StationMetaHistoryDocument = StationMetaHistory & Document;
 export class StationMetaHistory {
   @Prop({ type: Date, default: new Date() })
   date: Date;
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Station' })
-  station: Station;
+  @Prop()
+  stationId: number;
   @Prop()
   name: string;
   @Prop()
