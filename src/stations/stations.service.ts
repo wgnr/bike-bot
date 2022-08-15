@@ -54,79 +54,77 @@ export class StationsService {
       'last_connection_date',
     ];
 
-    await Promise.all(
-      fetchedStations.map(async (fetchedStation) => {
-        const savedStation = await this.findByStationId(fetchedStation.id);
+    const promises = fetchedStations.map(async (fetchedStation) => {
+      const savedStation = await this.findByStationId(fetchedStation.id);
 
-        if (!savedStation) {
-          const newStation = await this.stationModel.create({
+      if (!savedStation) {
+        const newStation = {
+          ...fetchedStation,
+          stationId: fetchedStation.id,
+        };
+
+        await Promise.all([
+          this.stationModel.create(newStation),
+          this.stationHistoryModel.create(newStation),
+          this.stationMetaHistoryModel.create(newStation),
+        ]);
+
+        this.logger.verbose(
+          `Scrapper | New Station: ${fetchedStation.id} added`,
+        );
+        return;
+      }
+
+      const updatePromises = [];
+
+      if (
+        keyFields.some(
+          (kField) => savedStation[kField] !== fetchedStation[kField],
+        )
+      ) {
+        keyFields.forEach(
+          (kField) => (savedStation[kField] = fetchedStation[kField]),
+        );
+
+        updatePromises.push(
+          this.stationHistoryModel.create({
             ...fetchedStation,
-            stationId: fetchedStation.id,
-          });
+            stationId: savedStation.stationId,
+          }),
+        );
+      }
 
-          await this.stationHistoryModel.create({
-            ...fetchedStation,
-            stationId: newStation.stationId,
-          });
+      if (
+        keyMetaFields.some(
+          (kMField) => savedStation[kMField] !== fetchedStation[kMField],
+        )
+      ) {
+        const updatedFields = {};
 
-          await this.stationMetaHistoryModel.create({
-            ...fetchedStation,
-            stationId: newStation.stationId,
-          });
+        keyMetaFields.forEach((kMField) => {
+          if (savedStation[kMField] !== fetchedStation[kMField]) {
+            updatedFields[kMField] = fetchedStation[kMField];
+            savedStation[kMField] = fetchedStation[kMField];
+          }
+        });
 
-          this.logger.verbose(
-            `Scrapper | New Station: ${fetchedStation.id} added`,
-          );
-          return;
-        }
-
-        let updateStation = false;
-
-        if (
-          keyFields.some(
-            (kField) => savedStation[kField] !== fetchedStation[kField],
-          )
-        ) {
-          keyFields.forEach(
-            (kField) => (savedStation[kField] = fetchedStation[kField]),
-          );
-
-          await this.stationHistoryModel.create({
-            ...fetchedStation,
-            stationId: savedStation.id,
-          });
-
-          updateStation = true;
-        }
-
-        if (
-          keyMetaFields.some(
-            (kMField) => savedStation[kMField] !== fetchedStation[kMField],
-          )
-        ) {
-          const updatedFields = {};
-          keyMetaFields.forEach((kMField) => {
-            if (savedStation[kMField] !== fetchedStation[kMField]) {
-              updatedFields[kMField] = fetchedStation[kMField];
-              savedStation[kMField] = fetchedStation[kMField];
-            }
-          });
-
-          await this.stationMetaHistoryModel.create({
+        updatePromises.push(
+          this.stationMetaHistoryModel.create({
             ...updatedFields,
-            stationId: savedStation.id,
-          });
+            stationId: savedStation.stationId,
+          }),
+        );
+      }
 
-          updateStation = true;
-        }
+      if (updatePromises.length) {
+        await Promise.all([...updatePromises, savedStation.save()]);
 
-        if (updateStation) {
-          await savedStation.save();
-          this.logger.verbose(
-            `Scrapper | Station: ${fetchedStation.id} updated.`,
-          );
-        }
-      }),
-    );
+        this.logger.verbose(
+          `Scrapper | Station: ${fetchedStation.id} updated.`,
+        );
+      }
+    });
+
+    await Promise.all(promises);
   }
 }
