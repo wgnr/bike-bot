@@ -9,6 +9,8 @@ async function bootstrap() {
 
   app.use(helmet());
 
+  app.enableShutdownHooks();
+
   await app.listen(port);
 }
 
