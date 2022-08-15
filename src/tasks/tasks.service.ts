@@ -19,7 +19,7 @@ export class TasksService {
 
     try {
       await fetch(url);
-      this.logger.verbose('keep-alive: ok');
+      this.logger.log('keep-alive finished');
     } catch (e) {
       this.logger.warn(
         'There was an error keeping alive keroku',
@@ -31,6 +31,6 @@ export class TasksService {
   @Cron(CronExpression.EVERY_MINUTE, { name: 'stationScrapping' })
   async scrapStation() {
     await this.stationService.scrapStations();
-    this.logger.verbose('Scrapper | Station finished');
+    this.logger.log('Scrap Stations finished');
   }
 }

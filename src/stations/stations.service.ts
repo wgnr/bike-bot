@@ -8,6 +8,10 @@ import {
   StationHistory,
   StationHistoryDocument,
 } from './schemas/station-history.schema';
+import {
+  StationMetaHistory,
+  StationMetaHistoryDocument,
+} from './schemas/station-meta-history.schema';
 import { Station, StationDocument } from './schemas/station.schema';
 
 @Injectable()
@@ -19,6 +23,8 @@ export class StationsService {
     private readonly stationModel: Model<StationDocument>,
     @InjectModel(StationHistory.name)
     private readonly stationHistoryModel: Model<StationHistoryDocument>,
+    @InjectModel(StationMetaHistory.name)
+    private readonly stationMetaHistoryModel: Model<StationMetaHistoryDocument>,
     private readonly config: ConfigService<EnvConfig>,
   ) {}
 
@@ -39,6 +45,14 @@ export class StationsService {
     } = (await request.json()) as ScrapedStationsResponseDTO;
 
     const keyFields = ['tandem', 'withBackseat', 'anchor', 'bikes'];
+    const keyMetaFields = [
+      'favorite',
+      'name',
+      'address',
+      'station_code',
+      'status',
+      'last_connection_date',
+    ];
 
     await Promise.all(
       fetchedStations.map(async (fetchedStation) => {
@@ -55,29 +69,63 @@ export class StationsService {
             station: newStation.id,
           });
 
-          this.logger.log(`Scrapper | New Station: ${fetchedStation.id} added`);
+          await this.stationMetaHistoryModel.create({
+            ...fetchedStation,
+            stationId: fetchedStation.id,
+            station: newStation.id,
+          });
+
+          this.logger.verbose(
+            `Scrapper | New Station: ${fetchedStation.id} added`,
+          );
           return;
         }
 
+        let updateStation = false;
+
         if (
           keyFields.some(
-            (field) => savedStation[field] !== fetchedStation[field],
+            (kField) => savedStation[kField] !== fetchedStation[kField],
           )
         ) {
           keyFields.forEach(
-            (field) => (savedStation[field] = fetchedStation[field]),
+            (kField) => (savedStation[kField] = fetchedStation[kField]),
           );
 
-          await Promise.all([
-            this.stationHistoryModel.create({
-              ...fetchedStation,
-              station: savedStation.id,
-            }),
-            savedStation.save(),
-          ]);
+          await this.stationHistoryModel.create({
+            ...fetchedStation,
+            station: savedStation.id,
+          });
 
-          this.logger.log(`Scrapper | Station: ${fetchedStation.id} updated.`);
-          return;
+          updateStation = true;
+        }
+
+        if (
+          keyMetaFields.some(
+            (kMField) => savedStation[kMField] !== fetchedStation[kMField],
+          )
+        ) {
+          const updatedFields = {};
+          keyMetaFields.forEach((kMField) => {
+            if (savedStation[kMField] !== fetchedStation[kMField]) {
+              updatedFields[kMField] = fetchedStation[kMField];
+              savedStation[kMField] = fetchedStation[kMField];
+            }
+          });
+
+          await this.stationMetaHistoryModel.create({
+            ...updatedFields,
+            station: savedStation.id,
+          });
+
+          updateStation = true;
+        }
+
+        if (updateStation) {
+          await savedStation.save();
+          this.logger.verbose(
+            `Scrapper | Station: ${fetchedStation.id} updated.`,
+          );
         }
       }),
     );

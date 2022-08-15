@@ -1,12 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { Station } from './station.schema';
 
-export type StationDocument = Station & Document;
+export type StationMetaHistoryDocument = StationMetaHistory & Document;
 
-@Schema({ versionKey: false, timestamps: true })
-export class Station {
-  @Prop()
-  stationId: number;
+@Schema({ versionKey: false })
+export class StationMetaHistory {
+  @Prop({ type: Date, default: new Date() })
+  date: Date;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Station' })
+  station: Station;
   @Prop()
   name: string;
   @Prop()
@@ -32,14 +35,7 @@ export class Station {
   };
   @Prop()
   favorite: boolean;
-  @Prop()
-  tandem: number;
-  @Prop()
-  withBackseat: number;
-  @Prop()
-  anchor: number;
-  @Prop()
-  bikes: number;
 }
 
-export const StationSchema = SchemaFactory.createForClass(Station);
+export const StationMetaHistorySchema =
+  SchemaFactory.createForClass(StationMetaHistory);
