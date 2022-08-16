@@ -17,6 +17,9 @@ export interface EnvConfig {
   cron: {
     stop: boolean;
   };
+  bot: {
+    token: string;
+  };
 }
 
 export const envConfig: () => EnvConfig = () => ({
@@ -37,5 +40,8 @@ export const envConfig: () => EnvConfig = () => ({
   },
   cron: {
     stop: String(process.env.DISABLE_CRONS).toLowerCase() === 'true',
+  },
+  bot: {
+    token: process.env.TELEGRAM_BOT_KEY ?? '',
   },
 });

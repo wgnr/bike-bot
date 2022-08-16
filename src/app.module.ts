@@ -12,6 +12,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { StationsModule } from './stations/stations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { BotModule } from './bot/bot.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AppService } from './app.service';
     }),
     TasksModule,
     StationsModule,
+    BotModule,
   ],
   controllers: [AppController],
   providers: [AppService],
