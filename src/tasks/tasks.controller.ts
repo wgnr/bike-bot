@@ -1,21 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { TasksService } from './tasks.service';
 
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly schedulerRegistry: SchedulerRegistry) {}
+  constructor(private readonly tasksServices: TasksService) {}
 
   @Get()
-  getAllCrons() {
-    const jobs = this.schedulerRegistry.getCronJobs();
-
-    return {
-      tasks: [...jobs].map(([name, task]) => ({
-        name,
-        isRunning: task.running ?? false,
-        lastExecutionDate: task.lastDate() ?? null,
-        nextExecutionDate: task.nextDate(),
-      })),
-    };
+  getAll() {
+    return this.tasksServices.getAll();
   }
 }

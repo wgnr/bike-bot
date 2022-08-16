@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { EnvConfig } from 'src/config/configuration';
 import { StationsService } from 'src/stations/stations.service';
 
@@ -11,7 +11,16 @@ export class TasksService {
   constructor(
     private readonly config: ConfigService<EnvConfig>,
     private readonly stationService: StationsService,
-  ) {}
+    private readonly schedulerRegistry: SchedulerRegistry,
+  ) {
+    setImmediate(() => {
+      if (this.config.get('cron.stop', { infer: true })) {
+        const tasks = this.schedulerRegistry.getCronJobs();
+        tasks.forEach((task) => task.stop());
+        this.logger.log('All cron jobs has been stopped by config.');
+      }
+    });
+  }
 
   @Cron(CronExpression.EVERY_10_MINUTES, { name: 'keepServiceAlive' })
   async keepServiceAlive() {
@@ -32,5 +41,18 @@ export class TasksService {
   async scrapStation() {
     await this.stationService.scrapStations();
     this.logger.log('Scrap Stations finished');
+  }
+
+  getAll() {
+    const tasks = this.schedulerRegistry.getCronJobs();
+
+    return {
+      tasks: [...tasks].map(([name, task]) => ({
+        name,
+        isRunning: task.running ?? false,
+        lastExecutionDate: task.lastDate() ?? null,
+        nextExecutionDate: task.nextDate(),
+      })),
+    };
   }
 }

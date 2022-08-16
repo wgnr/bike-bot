@@ -14,6 +14,9 @@ export interface EnvConfig {
       },
     ];
   };
+  cron: {
+    stop: boolean;
+  };
 }
 
 export const envConfig: () => EnvConfig = () => ({
@@ -31,5 +34,8 @@ export const envConfig: () => EnvConfig = () => ({
         method: 'GET',
       },
     ],
+  },
+  cron: {
+    stop: String(process.env.DISABLE_CRONS).toLowerCase() === 'true',
   },
 });
