@@ -12,15 +12,7 @@ export class TasksService {
     private readonly config: ConfigService<EnvConfig>,
     private readonly stationService: StationsService,
     private readonly schedulerRegistry: SchedulerRegistry,
-  ) {
-    setImmediate(() => {
-      if (this.config.get('cron.stop', { infer: true })) {
-        const tasks = this.schedulerRegistry.getCronJobs();
-        tasks.forEach((task) => task.stop());
-        this.logger.log('All cron jobs has been stopped by config.');
-      }
-    });
-  }
+  ) {}
 
   @Cron(CronExpression.EVERY_10_MINUTES, { name: 'keepServiceAlive' })
   async keepServiceAlive() {
