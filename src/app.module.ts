@@ -29,7 +29,7 @@ import { BotModule } from './bot/bot.module';
         uri: configService.get('db.uri', {
           infer: true,
         }),
-        dbName: 'mbtb',
+        dbName: 'mbtb-v2',
       }),
     }),
     TasksModule,
