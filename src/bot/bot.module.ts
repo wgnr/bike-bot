@@ -1,10 +1,10 @@
 import { Logger, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectBot, TelegrafModule } from 'nestjs-telegraf';
+import { TelegrafModule } from 'nestjs-telegraf';
 import { EnvConfig } from 'src/config/configuration';
 import { StationsModule } from 'src/stations/stations.module';
 import { BotService } from './bot.service';
-import { Telegraf } from 'telegraf';
+import { BotController } from './bot.controller';
 
 @Module({
   imports: [
@@ -17,14 +17,15 @@ import { Telegraf } from 'telegraf';
     StationsModule,
   ],
   providers: [BotService],
+  controllers: [BotController],
 })
 export class BotModule implements OnApplicationShutdown {
   private readonly logger = new Logger(BotModule.name);
 
-  constructor(@InjectBot() private readonly bot: Telegraf) {}
+  constructor(private readonly botService: BotService) {}
 
   async onApplicationShutdown(signal?: string) {
-    this.bot.stop();
+    this.botService.stop();
     this.logger.verbose('Telegram bot stopped on shutdown');
   }
 }

@@ -1,12 +1,35 @@
-import { Injectable } from '@nestjs/common';
-import { Command, Hears, Help, On, Start, Update } from 'nestjs-telegraf';
-import { Context } from 'telegraf';
+import { Injectable, Logger } from '@nestjs/common';
+import {
+  Command,
+  Hears,
+  Help,
+  InjectBot,
+  On,
+  Start,
+  Update,
+} from 'nestjs-telegraf';
+import { Context, Telegraf } from 'telegraf';
 import { StationsService } from 'src/stations/stations.service';
 
 @Update()
 @Injectable()
 export class BotService {
-  constructor(private readonly stationsService: StationsService) {}
+  private readonly logger = new Logger(BotService.name);
+
+  constructor(
+    private readonly stationsService: StationsService,
+    @InjectBot() private readonly bot: Telegraf,
+  ) {}
+
+  stop() {
+    this.bot.stop();
+    this.logger.log('Bot stopped.');
+  }
+
+  start() {
+    this.bot.launch();
+    this.logger.log('Bot started.');
+  }
 
   getData(): { message: string } {
     return { message: 'Intial message. Welcome to server!' };
