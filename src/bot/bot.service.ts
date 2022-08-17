@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Hears, Help, On, Start, Update } from 'nestjs-telegraf';
+import { Command, Hears, Help, On, Start, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
+import { StationsService } from 'src/stations/stations.service';
 
 @Update()
 @Injectable()
 export class BotService {
+  constructor(private readonly stationsService: StationsService) {}
+
   getData(): { message: string } {
-    return { message: 'Welcome to server!' };
+    return { message: 'Intial message. Welcome to server!' };
   }
 
   @Start()
@@ -16,12 +19,24 @@ export class BotService {
 
   @Help()
   async helpCommand(ctx: Context) {
-    await ctx.reply('Send me a sticker');
+    await ctx.reply('help command');
   }
 
-  @On('sticker')
+  @On('location')
   async onSticker(ctx: Context) {
-    await ctx.reply('👍');
+    const station = await this.stationsService.findNearestByLocation(
+      ctx.message['location'],
+    );
+    await ctx.replyWithLocation(
+      +station.location.latitude,
+      +station.location.longitude,
+    );
+    await ctx.reply(`station:\n${JSON.stringify(station, null, 2)}`);
+  }
+
+  @Command('near')
+  async location(ctx: Context) {
+    await ctx.reply('Send me your location first!');
   }
 
   @Hears('hi')

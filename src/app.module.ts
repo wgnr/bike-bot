@@ -13,6 +13,8 @@ import { StationsModule } from './stations/stations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BotModule } from './bot/bot.module';
+import { InjectBot } from 'nestjs-telegraf';
+import { Telegraf } from 'telegraf';
 
 @Module({
   imports: [
@@ -40,9 +42,13 @@ import { BotModule } from './bot/bot.module';
   providers: [AppService],
 })
 export class AppModule implements OnApplicationShutdown {
-  constructor(@InjectConnection() private connection: Connection) {}
+  constructor(
+    @InjectConnection() private connection: Connection,
+    @InjectBot() private readonly bot: Telegraf,
+  ) {}
 
   async onApplicationShutdown(signal?: string) {
+    this.bot.stop();
     await this.connection.close();
   }
 }

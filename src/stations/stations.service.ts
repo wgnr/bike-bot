@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EnvConfig } from '../config/configuration';
-import { ScrapedStationsResponseDTO } from './dto/scrap-stations.dto';
+import {
+  ScrapedStationDTO,
+  ScrapedStationsResponseDTO,
+} from './dto/scrap-stations.dto';
 import {
   StationHistory,
   StationHistoryDocument,
@@ -36,14 +39,45 @@ export class StationsService {
     return this.stationModel.findOne({ stationId }).exec();
   }
 
-  async scrapStations() {
-    const targets = this.config.get('station.scrap', { infer: true });
-    const [{ method, url }] = targets;
-    const request = await fetch(url);
-    const {
-      data: { stations: fetchedStations },
-    } = (await request.json()) as ScrapedStationsResponseDTO;
+  async findNearestByLocation({
+    latitude,
+    longitude,
+  }: {
+    latitude: number;
+    longitude: number;
+  }) {
+    const stations = await this.fetchStations();
 
+    stations.forEach((station) => {
+      const {
+        location: { latitude: stationLatitude, longitude: stationLongitude },
+      } = station;
+      station['distance'] = Math.sqrt(
+        Math.abs(Number(stationLatitude) - latitude) +
+          Math.abs(Number(stationLongitude) - longitude),
+      );
+    });
+
+    stations.sort((s1, s2) => s1['distance'] - s2['distance']);
+
+    return stations[0];
+  }
+  async fetchStations(): Promise<ScrapedStationDTO[]> {
+    try {
+      const url = this.config.get('dataURL', { infer: true });
+      const request = await fetch(url);
+      const {
+        data: { stations },
+      } = (await request.json()) as ScrapedStationsResponseDTO;
+
+      return stations;
+    } catch (e) {
+      this.logger.error('There was an error fethiching data...');
+      this.logger.error(e);
+    }
+  }
+
+  async scrapStations() {
     const keyFields = ['tandem', 'withBackseat', 'anchor', 'bikes'];
     const keyMetaFields = [
       'favorite',
@@ -54,6 +88,7 @@ export class StationsService {
       'last_connection_date',
     ];
 
+    const fetchedStations = await this.fetchStations();
     const promises = fetchedStations.map(async (fetchedStation) => {
       const savedStation = await this.findByStationId(fetchedStation.id);
 

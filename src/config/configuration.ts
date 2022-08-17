@@ -6,14 +6,7 @@ export interface EnvConfig {
   db: {
     uri: string;
   };
-  station: {
-    scrap: [
-      {
-        url: string;
-        method: 'GET' | 'POST';
-      },
-    ];
-  };
+  dataURL: string;
   cron: {
     stop: boolean;
   };
@@ -30,14 +23,7 @@ export const envConfig: () => EnvConfig = () => ({
   db: {
     uri: process.env.DB_URI ?? '',
   },
-  station: {
-    scrap: [
-      {
-        url: process.env.WEB_TARGET_URL ?? '',
-        method: 'GET',
-      },
-    ],
-  },
+  dataURL: process.env.WEB_TARGET_URL ?? '',
   cron: {
     stop: String(process.env.DISABLE_CRONS).toLowerCase() === 'true',
   },
