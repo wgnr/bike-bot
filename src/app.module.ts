@@ -1,10 +1,8 @@
 import { Connection } from 'mongoose';
-import {
-  CacheModule,
-  Logger,
-  Module,
-  OnApplicationShutdown,
-} from '@nestjs/common';
+import { PinoLogger } from 'nestjs-pino';
+// import { randomUUID } from 'node:crypto';
+import { LoggerModule } from 'nestjs-pino';
+import { CacheModule, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
   InjectConnection,
@@ -18,12 +16,42 @@ import { StationsModule } from './stations/stations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BotModule } from './bot/bot.module';
+import { PrettyOptions } from 'pino-pretty';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [envConfig],
+    }),
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<EnvConfig>) => {
+        return {
+          pinoHttp: {
+            level: configService.get('isProd', {
+              infer: true,
+            })
+              ? 'info'
+              : 'trace',
+            customProps: (req, res) => ({
+              context: 'HTTP',
+            }),
+            // genReqId: function (req) {
+            //   const id = randomUUID();
+            //   req.headers['My-Request-Id'] = id;
+            //   return id;
+            // },
+            transport: {
+              target: 'pino-pretty',
+              options: {
+                singleLine: true,
+                levelFirst: true,
+              } as PrettyOptions,
+            },
+          },
+        };
+      },
     }),
     CacheModule.register({
       isGlobal: true,
@@ -48,12 +76,16 @@ import { BotModule } from './bot/bot.module';
   providers: [AppService],
 })
 export class AppModule implements OnApplicationShutdown {
-  private readonly logger = new Logger(AppModule.name);
-
-  constructor(@InjectConnection() private connection: Connection) {}
+  constructor(
+    private readonly logger: PinoLogger,
+    @InjectConnection() private connection: Connection,
+  ) {
+    this.logger.setContext(AppModule.name);
+  }
 
   async onApplicationShutdown(signal?: string) {
     await this.connection.close();
-    this.logger.verbose('DB connection closed on shutdown');
+    console.log('DB connection closed on shutdown');
+    this.logger.info('DB connection closed on shutdown');
   }
 }

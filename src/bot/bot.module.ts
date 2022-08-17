@@ -1,9 +1,9 @@
 import {
-  Logger,
   Module,
   OnApplicationBootstrap,
   OnApplicationShutdown,
 } from '@nestjs/common';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { EnvConfig } from 'src/config/configuration';
@@ -28,9 +28,9 @@ import { BotController } from './bot.controller';
 export class BotModule
   implements OnApplicationShutdown, OnApplicationBootstrap
 {
-  private readonly logger = new Logger(BotModule.name);
-
   constructor(
+    @InjectPinoLogger(BotModule.name)
+    private readonly logger: PinoLogger,
     private readonly botService: BotService,
     private readonly config: ConfigService<EnvConfig>,
   ) {}
@@ -44,6 +44,7 @@ export class BotModule
 
   async onApplicationShutdown(signal?: string) {
     this.botService.stop();
-    this.logger.verbose('Telegram bot stopped on shutdown');
+    console.log('Telegram bot stopped on shutdown');
+    this.logger.info('Telegram bot stopped on shutdown');
   }
 }

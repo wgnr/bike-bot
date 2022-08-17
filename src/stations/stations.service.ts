@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
-import { CACHE_MANAGER, Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -22,9 +23,9 @@ const CACHE_STATIONS_TTL = 30; // seconds
 
 @Injectable()
 export class StationsService {
-  private readonly logger = new Logger(StationsService.name);
-
   constructor(
+    @InjectPinoLogger(StationsService.name)
+    private readonly logger: PinoLogger,
     @InjectModel(Station.name)
     private readonly stationModel: Model<StationDocument>,
     @InjectModel(BikeHistory.name)
@@ -56,8 +57,8 @@ export class StationsService {
 
       return this.cache.set(CACHE_STATIONS, stationsDTO, CACHE_STATIONS_TTL);
     } catch (e) {
-      this.logger.error('There was an error fethiching data...');
-      this.logger.error(e);
+      this.logger.error(e, 'There was an error fethiching data...');
+      throw e;
     }
   }
 
@@ -115,9 +116,7 @@ export class StationsService {
           this.stationMetaHistoryModel.create(fetchedStation),
         ]);
 
-        this.logger.verbose(
-          `Scrapper | New Station: ${fetchedStation.id} added`,
-        );
+        this.logger.trace(`Scrapper | New Station: ${fetchedStation.id} added`);
         return;
       }
 
@@ -160,9 +159,7 @@ export class StationsService {
       if (updatePromises.length) {
         await Promise.all([...updatePromises, savedStation.save()]);
 
-        this.logger.verbose(
-          `Scrapper | Station: ${fetchedStation.id} updated.`,
-        );
+        this.logger.trace(`Scrapper | Station: ${fetchedStation.id} updated.`);
       }
     });
 

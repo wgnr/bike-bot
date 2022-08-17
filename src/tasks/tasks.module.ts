@@ -1,4 +1,5 @@
-import { Logger, Module, OnApplicationBootstrap } from '@nestjs/common';
+import { Module, OnApplicationBootstrap } from '@nestjs/common';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { TasksService } from './tasks.service';
 import { TasksController } from './tasks.controller';
 import { StationsModule } from 'src/stations/stations.module';
@@ -12,9 +13,9 @@ import { EnvConfig } from 'src/config/configuration';
   imports: [StationsModule],
 })
 export class TasksModule implements OnApplicationBootstrap {
-  private readonly logger = new Logger(TasksModule.name);
-
   constructor(
+    @InjectPinoLogger(TasksModule.name)
+    private readonly logger: PinoLogger,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly config: ConfigService<EnvConfig>,
   ) {}

@@ -1,4 +1,5 @@
 export interface EnvConfig {
+  isProd?: boolean;
   port: number;
   hosting: {
     url: string;
@@ -17,6 +18,7 @@ export interface EnvConfig {
 }
 
 export const envConfig: () => EnvConfig = () => ({
+  isProd: process.env.NODE_ENV === 'production',
   port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
   hosting: {
     url: process.env.HOSTING_DEPLOYED_URL ?? 'localhost',

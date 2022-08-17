@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import {
   Command,
   Hears,
@@ -14,21 +15,21 @@ import { StationsService } from 'src/stations/stations.service';
 @Update()
 @Injectable()
 export class BotService {
-  private readonly logger = new Logger(BotService.name);
-
   constructor(
+    @InjectPinoLogger(BotService.name)
+    private readonly logger: PinoLogger,
     private readonly stationsService: StationsService,
     @InjectBot() private readonly bot: Telegraf,
   ) {}
 
   stop() {
     this.bot.stop();
-    this.logger.log('Bot stopped.');
+    this.logger.info('Bot stopped.');
   }
 
   start() {
     this.bot.launch();
-    this.logger.log('Bot started.');
+    this.logger.info('Bot started.');
   }
 
   getData(): { message: string } {
