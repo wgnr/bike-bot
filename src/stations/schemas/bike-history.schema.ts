@@ -1,14 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { IStationBikeHistory as IBikesHistory } from '../dto/station.dto';
 
-export type StationHistoryDocument = StationHistory & Document;
+export type BikeHistoryDocument = BikeHistory & Document;
 
 @Schema({ versionKey: false })
-export class StationHistory {
+export class BikeHistory implements IBikesHistory {
   @Prop({ type: Date, default: () => new Date() })
   date: Date;
   @Prop()
-  stationId: number;
+  id: number;
   @Prop()
   tandem: number;
   @Prop()
@@ -19,5 +20,4 @@ export class StationHistory {
   bikes: number;
 }
 
-export const StationHistorySchema =
-  SchemaFactory.createForClass(StationHistory);
+export const BikeHistorySchema = SchemaFactory.createForClass(BikeHistory);

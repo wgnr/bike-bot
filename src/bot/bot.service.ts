@@ -27,10 +27,9 @@ export class BotService {
     const station = await this.stationsService.findNearestByLocation(
       ctx.message['location'],
     );
-    await ctx.replyWithLocation(
-      +station.location.latitude,
-      +station.location.longitude,
-    );
+
+    const [lat, lon] = station.location;
+    await ctx.replyWithLocation(lat, lon);
     await ctx.reply(`station:\n${JSON.stringify(station, null, 2)}`);
   }
 

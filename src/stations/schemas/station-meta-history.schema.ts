@@ -1,14 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { IStationHistory } from '../dto/station.dto';
 
-export type StationMetaHistoryDocument = StationMetaHistory & Document;
+export type StationHistoryDocument = StationHistory & Document;
 
 @Schema({ versionKey: false })
-export class StationMetaHistory {
+export class StationHistory implements IStationHistory {
   @Prop({ type: Date, default: () => new Date() })
   date: Date;
   @Prop()
-  stationId: number;
+  id: number;
   @Prop()
   name: string;
   @Prop()
@@ -21,20 +22,14 @@ export class StationMetaHistory {
   last_connection_date: number;
   @Prop({
     raw: {
-      name: { type: String },
-      latitude: { type: Number },
-      longitude: { type: Number },
+      location: { type: [Number] },
     },
-    type: Object,
+    default: undefined,
   })
-  location: {
-    name: string;
-    latitude: string;
-    longitude: string;
-  };
+  location: [number, number];
   @Prop()
   favorite: boolean;
 }
 
-export const StationMetaHistorySchema =
-  SchemaFactory.createForClass(StationMetaHistory);
+export const StationHistorySchema =
+  SchemaFactory.createForClass(StationHistory);

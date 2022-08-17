@@ -1,19 +1,18 @@
+import { isEqual } from 'lodash';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EnvConfig } from '../config/configuration';
+import { StationDTO } from './dto/station.dto';
+import { ScrapedStationsResponseDTO } from './dto/scrapped-stations.dto';
 import {
-  ScrapedStationDTO,
-  ScrapedStationsResponseDTO,
-} from './dto/scrap-stations.dto';
+  BikeHistory,
+  BikeHistoryDocument,
+} from './schemas/bike-history.schema';
 import {
   StationHistory,
   StationHistoryDocument,
-} from './schemas/station-history.schema';
-import {
-  StationMetaHistory,
-  StationMetaHistoryDocument,
 } from './schemas/station-meta-history.schema';
 import { Station, StationDocument } from './schemas/station.schema';
 
@@ -24,24 +23,39 @@ export class StationsService {
   constructor(
     @InjectModel(Station.name)
     private readonly stationModel: Model<StationDocument>,
+    @InjectModel(BikeHistory.name)
+    private readonly stationHistoryModel: Model<BikeHistoryDocument>,
     @InjectModel(StationHistory.name)
-    private readonly stationHistoryModel: Model<StationHistoryDocument>,
-    @InjectModel(StationMetaHistory.name)
-    private readonly stationMetaHistoryModel: Model<StationMetaHistoryDocument>,
+    private readonly stationMetaHistoryModel: Model<StationHistoryDocument>,
     private readonly config: ConfigService<EnvConfig>,
   ) {}
+
+  async fetchStations(): Promise<StationDTO[]> {
+    try {
+      const url = this.config.get('dataURL', { infer: true });
+      const request = await fetch(url);
+      const {
+        data: { stations },
+      } = (await request.json()) as ScrapedStationsResponseDTO;
+
+      return stations.map((station) => new StationDTO(station));
+    } catch (e) {
+      this.logger.error('There was an error fethiching data...');
+      this.logger.error(e);
+    }
+  }
 
   async findAll() {
     return this.stationModel.find().exec();
   }
 
   async findByStationId(stationId: number) {
-    return this.stationModel.findOne({ stationId }).exec();
+    return this.stationModel.findOne({ id: stationId }).exec();
   }
 
   async findNearestByLocation({
-    latitude,
-    longitude,
+    latitude: myLatitude,
+    longitude: myLongitude,
   }: {
     latitude: number;
     longitude: number;
@@ -50,11 +64,11 @@ export class StationsService {
 
     stations.forEach((station) => {
       const {
-        location: { latitude: stationLatitude, longitude: stationLongitude },
+        location: [stationLatitude, stationLongitude],
       } = station;
       station['distance'] = Math.sqrt(
-        Math.abs(Number(stationLatitude) - latitude) +
-          Math.abs(Number(stationLongitude) - longitude),
+        Math.abs(Number(stationLatitude) - myLatitude) +
+          Math.abs(Number(stationLongitude) - myLongitude),
       );
     });
 
@@ -62,30 +76,16 @@ export class StationsService {
 
     return stations[0];
   }
-  async fetchStations(): Promise<ScrapedStationDTO[]> {
-    try {
-      const url = this.config.get('dataURL', { infer: true });
-      const request = await fetch(url);
-      const {
-        data: { stations },
-      } = (await request.json()) as ScrapedStationsResponseDTO;
-
-      return stations;
-    } catch (e) {
-      this.logger.error('There was an error fethiching data...');
-      this.logger.error(e);
-    }
-  }
 
   async scrapStations() {
-    const keyFields = ['tandem', 'withBackseat', 'anchor', 'bikes'];
-    const keyMetaFields = [
-      'favorite',
-      'name',
+    const bikeFields = ['tandem', 'withBackseat', 'anchor', 'bikes'];
+    const metaFields = [
       'address',
+      'favorite',
+      'last_connection_date',
+      'name',
       'station_code',
       'status',
-      'last_connection_date',
     ];
 
     const fetchedStations = await this.fetchStations();
@@ -93,15 +93,10 @@ export class StationsService {
       const savedStation = await this.findByStationId(fetchedStation.id);
 
       if (!savedStation) {
-        const newStation = {
-          ...fetchedStation,
-          stationId: fetchedStation.id,
-        };
-
         await Promise.all([
-          this.stationModel.create(newStation),
-          this.stationHistoryModel.create(newStation),
-          this.stationMetaHistoryModel.create(newStation),
+          this.stationModel.create(fetchedStation),
+          this.stationHistoryModel.create(fetchedStation),
+          this.stationMetaHistoryModel.create(fetchedStation),
         ]);
 
         this.logger.verbose(
@@ -113,40 +108,35 @@ export class StationsService {
       const updatePromises = [];
 
       if (
-        keyFields.some(
-          (kField) => savedStation[kField] !== fetchedStation[kField],
+        bikeFields.some(
+          (bikeField) => savedStation[bikeField] !== fetchedStation[bikeField],
         )
       ) {
-        keyFields.forEach(
-          (kField) => (savedStation[kField] = fetchedStation[kField]),
+        bikeFields.forEach(
+          (bikeField) => (savedStation[bikeField] = fetchedStation[bikeField]),
         );
 
-        updatePromises.push(
-          this.stationHistoryModel.create({
-            ...fetchedStation,
-            stationId: savedStation.stationId,
-          }),
-        );
+        updatePromises.push(this.stationHistoryModel.create(fetchedStation));
       }
 
       if (
-        keyMetaFields.some(
-          (kMField) => savedStation[kMField] !== fetchedStation[kMField],
+        metaFields.some(
+          (mField) => !isEqual(savedStation[mField], fetchedStation[mField]),
         )
       ) {
         const updatedFields = {};
 
-        keyMetaFields.forEach((kMField) => {
-          if (savedStation[kMField] !== fetchedStation[kMField]) {
-            updatedFields[kMField] = fetchedStation[kMField];
-            savedStation[kMField] = fetchedStation[kMField];
+        metaFields.forEach((mField) => {
+          if (!isEqual(savedStation[mField], fetchedStation[mField])) {
+            updatedFields[mField] = fetchedStation[mField];
+            savedStation[mField] = fetchedStation[mField];
           }
         });
 
         updatePromises.push(
           this.stationMetaHistoryModel.create({
             ...updatedFields,
-            stationId: savedStation.stationId,
+            id: savedStation.id,
           }),
         );
       }

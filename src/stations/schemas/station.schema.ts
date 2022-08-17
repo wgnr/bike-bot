@@ -1,12 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { IStation } from '../dto/station.dto';
 
 export type StationDocument = Station & Document;
 
 @Schema({ versionKey: false, timestamps: true })
-export class Station {
+export class Station implements IStation {
+  @Prop({ type: Date, default: () => new Date() })
+  date: Date;
   @Prop()
-  stationId: number;
+  id: number;
   @Prop()
   name: string;
   @Prop()
@@ -19,17 +22,10 @@ export class Station {
   last_connection_date: number;
   @Prop({
     raw: {
-      name: { type: String },
-      latitude: { type: Number },
-      longitude: { type: Number },
+      location: { type: [Number] },
     },
-    type: Object,
   })
-  location: {
-    name: string;
-    latitude: string;
-    longitude: string;
-  };
+  location: [number, number];
   @Prop()
   favorite: boolean;
   @Prop()
