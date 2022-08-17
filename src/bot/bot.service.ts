@@ -32,7 +32,7 @@ export class BotService {
   }
 
   getData(): { message: string } {
-    return { message: 'Intial message. Welcome to server!' };
+    return { message: 'Bot under development.' };
   }
 
   @Start()

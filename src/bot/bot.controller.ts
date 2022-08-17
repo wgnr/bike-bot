@@ -5,12 +5,12 @@ import { BotService } from './bot.service';
 export class BotController {
   constructor(private readonly botService: BotService) {}
 
-  @Get('stop')
+  // @Get('stop')
   async stop() {
     return this.botService.stop();
   }
 
-  @Get('start')
+  // @Get('start')
   async start() {
     return this.botService.start();
   }

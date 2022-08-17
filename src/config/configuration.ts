@@ -12,6 +12,7 @@ export interface EnvConfig {
   };
   bot: {
     token: string;
+    disable: boolean;
   };
 }
 
@@ -29,5 +30,6 @@ export const envConfig: () => EnvConfig = () => ({
   },
   bot: {
     token: process.env.TELEGRAM_BOT_KEY ?? '',
+    disable: String(process.env.DISABLE_BOT).toLowerCase() === 'true',
   },
 });
