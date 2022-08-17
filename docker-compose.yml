@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  db:
+    image: mongo:5.0.10
+    restart: always
+    ports:
+      - 27017:27017
