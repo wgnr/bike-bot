@@ -1,5 +1,5 @@
 import { Connection } from 'mongoose';
-import { Module, OnApplicationShutdown } from '@nestjs/common';
+import { Logger, Module, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
   InjectConnection,
@@ -13,8 +13,6 @@ import { StationsModule } from './stations/stations.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BotModule } from './bot/bot.module';
-import { InjectBot } from 'nestjs-telegraf';
-import { Telegraf } from 'telegraf';
 
 @Module({
   imports: [
@@ -42,13 +40,12 @@ import { Telegraf } from 'telegraf';
   providers: [AppService],
 })
 export class AppModule implements OnApplicationShutdown {
-  constructor(
-    @InjectConnection() private connection: Connection,
-    @InjectBot() private readonly bot: Telegraf,
-  ) {}
+  private readonly logger = new Logger(AppModule.name);
+
+  constructor(@InjectConnection() private connection: Connection) {}
 
   async onApplicationShutdown(signal?: string) {
-    this.bot.stop();
     await this.connection.close();
+    this.logger.verbose('DB connection closed on shutdown');
   }
 }
