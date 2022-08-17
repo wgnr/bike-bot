@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { Injectable, Logger } from '@nestjs/common';
+import { CACHE_MANAGER, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -15,6 +15,10 @@ import {
   StationHistoryDocument,
 } from './schemas/station-meta-history.schema';
 import { Station, StationDocument } from './schemas/station.schema';
+import { Cache } from 'cache-manager';
+
+const CACHE_STATIONS = 'stations';
+const CACHE_STATIONS_TTL = 30; // seconds
 
 @Injectable()
 export class StationsService {
@@ -28,9 +32,19 @@ export class StationsService {
     @InjectModel(StationHistory.name)
     private readonly stationMetaHistoryModel: Model<StationHistoryDocument>,
     private readonly config: ConfigService<EnvConfig>,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
-  async fetchStations(): Promise<StationDTO[]> {
+  async fetchStations(invalidate?: boolean): Promise<StationDTO[]> {
+    if (!invalidate) {
+      const stations = await this.cache.get<StationDTO[]>(CACHE_STATIONS);
+
+      if (stations) {
+        this.logger.debug(`Using cached value from '${CACHE_STATIONS}'`);
+        return stations;
+      }
+    }
+
     try {
       const url = this.config.get('dataURL', { infer: true });
       const request = await fetch(url);
@@ -38,7 +52,9 @@ export class StationsService {
         data: { stations },
       } = (await request.json()) as ScrapedStationsResponseDTO;
 
-      return stations.map((station) => new StationDTO(station));
+      const stationsDTO = stations.map((station) => new StationDTO(station));
+
+      return this.cache.set(CACHE_STATIONS, stationsDTO, CACHE_STATIONS_TTL);
     } catch (e) {
       this.logger.error('There was an error fethiching data...');
       this.logger.error(e);

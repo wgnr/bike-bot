@@ -1,5 +1,10 @@
 import { Connection } from 'mongoose';
-import { Logger, Module, OnApplicationShutdown } from '@nestjs/common';
+import {
+  CacheModule,
+  Logger,
+  Module,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
   InjectConnection,
@@ -19,6 +24,9 @@ import { BotModule } from './bot/bot.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [envConfig],
+    }),
+    CacheModule.register({
+      isGlobal: true,
     }),
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({

@@ -1,9 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import {
-  BikeHistory,
-  BikeHistorySchema,
-} from './schemas/bike-history.schema';
+import { BikeHistory, BikeHistorySchema } from './schemas/bike-history.schema';
 import { Station, StationSchema } from './schemas/station.schema';
 import { StationsService } from './stations.service';
 import { StationsController } from './stations.controller';
