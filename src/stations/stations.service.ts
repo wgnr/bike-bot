@@ -70,30 +70,6 @@ export class StationsService {
     return this.stationModel.findOne({ id: stationId }).exec();
   }
 
-  async findNearestByLocation({
-    latitude: myLatitude,
-    longitude: myLongitude,
-  }: {
-    latitude: number;
-    longitude: number;
-  }) {
-    const stations = await this.fetchStations();
-
-    stations.forEach((station) => {
-      const {
-        location: [stationLatitude, stationLongitude],
-      } = station;
-      station['distance'] = Math.sqrt(
-        Math.abs(Number(stationLatitude) - myLatitude) +
-          Math.abs(Number(stationLongitude) - myLongitude),
-      );
-    });
-
-    stations.sort((s1, s2) => s1['distance'] - s2['distance']);
-
-    return stations[0];
-  }
-
   async scrapStations() {
     const bikeFields = ['tandem', 'withBackseat', 'anchor', 'bikes'];
     const metaFields = [

@@ -1,6 +1,8 @@
 import { ScrapedStationDTO } from './scrapped-stations.dto';
 
-export interface IStationBikeHistory {
+export type Bike = 'tandem' | 'withBackseat' | 'anchor' | 'bikes';
+
+export interface IStationBikeHistory extends Record<Bike, number> {
   date: Date;
   id: number;
   tandem: number;
