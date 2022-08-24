@@ -10,6 +10,11 @@ import { EnvConfig } from 'src/config/configuration';
 import { StationsModule } from 'src/stations/stations.module';
 import { BotService } from './bot.service';
 import { BotController } from './bot.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import {
+  TelegramMessage,
+  TelegramMessageSchema,
+} from './schema/telegram-message.schema';
 
 @Module({
   imports: [
@@ -20,6 +25,9 @@ import { BotController } from './bot.controller';
       }),
       inject: [ConfigService],
     }),
+    MongooseModule.forFeature([
+      { name: TelegramMessage.name, schema: TelegramMessageSchema },
+    ]),
     StationsModule,
   ],
   providers: [BotService],

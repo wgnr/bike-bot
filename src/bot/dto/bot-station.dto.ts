@@ -29,7 +29,7 @@ export class BotStationDTO implements IStation {
       `🧭 Direccion: <pre>${this.address}</pre>\n`,
       `⚓ Docks: ${this.anchor}`,
       `🚲 Comunes: ${this.bikes}`,
-      `👶 Con Aciento: ${this.withBackseat}`,
+      `👶 Con Asiento: ${this.withBackseat}`,
       `👥 Tandem: ${this.tandem}`,
     ].join('\n');
   }
