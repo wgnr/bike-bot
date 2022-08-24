@@ -13,6 +13,8 @@ import {
   TelegramMessage,
   TelegramMessageDocument,
 } from './schema/telegram-message.schema';
+import { ConfigService } from '@nestjs/config';
+import { EnvConfig } from 'src/config/configuration';
 
 const userIdTag = (userId: string | number) => `bot:userId:${userId}`;
 
@@ -27,11 +29,12 @@ export class BotService {
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     @InjectModel(TelegramMessage.name)
     private readonly telegramMessageModel: Model<TelegramMessageDocument>,
+    private readonly config: ConfigService<EnvConfig>,
   ) {}
 
   async setUserStations(userId: string | number, stations: BotStationDTO[]) {
     await this.cache.set<BotStationDTO[]>(userIdTag(userId), stations, {
-      ttl: 60,
+      ttl: this.config.get('bot.ttl', { infer: true }),
     });
     this.logger.info('Location stored for 1 minnute');
   }

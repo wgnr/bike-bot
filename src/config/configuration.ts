@@ -1,6 +1,9 @@
 export interface EnvConfig {
   isProd?: boolean;
   port: number;
+  station: {
+    ttl: number;
+  };
   hosting: {
     url: string;
   };
@@ -14,6 +17,7 @@ export interface EnvConfig {
   bot: {
     token: string;
     disable: boolean;
+    ttl: number;
   };
 }
 
@@ -33,5 +37,11 @@ export const envConfig: () => EnvConfig = () => ({
   bot: {
     token: process.env.TELEGRAM_BOT_KEY ?? '',
     disable: String(process.env.DISABLE_BOT).toLowerCase() === 'true',
+    ttl: process.env.BOT_USER_LOCATION_TTL
+      ? parseInt(process.env.BOT_USER_LOCATION_TTL, 10)
+      : 60,
+  },
+  station: {
+    ttl: process.env.STATION_TTL ? parseInt(process.env.STATION_TTL, 10) : 60,
   },
 });

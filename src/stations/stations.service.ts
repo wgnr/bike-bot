@@ -19,7 +19,6 @@ import { Station, StationDocument } from './schemas/station.schema';
 import { Cache } from 'cache-manager';
 
 const CACHE_STATIONS = 'stations';
-const CACHE_STATIONS_TTL = 30; // seconds
 
 @Injectable()
 export class StationsService {
@@ -55,7 +54,11 @@ export class StationsService {
 
       const stationsDTO = stations.map((station) => new StationDTO(station));
 
-      return this.cache.set(CACHE_STATIONS, stationsDTO, CACHE_STATIONS_TTL);
+      return this.cache.set(
+        CACHE_STATIONS,
+        stationsDTO,
+        this.config.get('station.ttl', { infer: true }),
+      );
     } catch (e) {
       this.logger.error(e, 'There was an error fethiching data...');
       throw e;
