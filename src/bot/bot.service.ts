@@ -95,7 +95,7 @@ export class BotService {
   @Command('tandem')
   async onCommand(ctx: Context) {
     await this.storeMessage(ctx.message);
-    const [, command] = (ctx.message['text'].match(/^\/(\w+\b)/) ?? []) as [
+    const [, command] = (ctx.message?.['text']?.match(/^\/(\w+\b)/) ?? []) as [
       string,
       string,
     ];
@@ -193,8 +193,14 @@ export class BotService {
   }
 
   private async storeMessage(message: Context['message']) {
-    this.logger.trace(message);
-    return this.telegramMessageModel.create(message);
+    const [, command] = (message?.['text']?.match(/^\/(\w+\b)/) ?? []) as [
+      string,
+      string,
+    ];
+
+    const augmentedMessage = { ...message, ...(command && { command }) };
+    this.logger.trace(augmentedMessage);
+    return this.telegramMessageModel.create(augmentedMessage);
   }
 }
 
