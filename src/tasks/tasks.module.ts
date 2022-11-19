@@ -1,4 +1,5 @@
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
 import { TasksService } from './tasks.service';
 import { TasksController } from './tasks.controller';
@@ -10,7 +11,7 @@ import { EnvConfig } from 'src/config/configuration';
 @Module({
   providers: [TasksService],
   controllers: [TasksController],
-  imports: [StationsModule],
+  imports: [StationsModule, HttpModule],
 })
 export class TasksModule implements OnApplicationBootstrap {
   constructor(

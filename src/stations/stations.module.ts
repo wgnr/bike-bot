@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BikeHistory, BikeHistorySchema } from './schemas/bike-history.schema';
 import { Station, StationSchema } from './schemas/station.schema';
@@ -16,6 +17,7 @@ import {
       { name: BikeHistory.name, schema: BikeHistorySchema },
       { name: StationHistory.name, schema: StationHistorySchema },
     ]),
+    HttpModule,
   ],
   providers: [StationsService],
   exports: [StationsService],

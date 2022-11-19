@@ -1,3 +1,6 @@
+import { AxiosError } from 'axios';
+import { catchError, firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 import { isEqual } from 'lodash';
 import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { PinoLogger, InjectPinoLogger } from 'nestjs-pino';
@@ -33,6 +36,7 @@ export class StationsService {
     private readonly stationMetaHistoryModel: Model<StationHistoryDocument>,
     private readonly config: ConfigService<EnvConfig>,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly httpService: HttpService,
   ) {}
 
   async fetchStations(invalidate?: boolean): Promise<StationDTO[]> {
@@ -47,10 +51,21 @@ export class StationsService {
 
     try {
       const url = this.config.get('dataURL', { infer: true });
-      const request = await fetch(url);
       const {
-        data: { stations },
-      } = (await request.json()) as ScrapedStationsResponseDTO;
+        data: {
+          data: { stations },
+        },
+      } = await firstValueFrom(
+        this.httpService.get<ScrapedStationsResponseDTO>(url).pipe(
+          catchError((error: AxiosError) => {
+            this.logger.error(
+              error,
+              `There was an error scrapping data. ${error.response.data}`,
+            );
+            throw error;
+          }),
+        ),
+      );
 
       const stationsDTO = stations.map((station) => new StationDTO(station));
 
